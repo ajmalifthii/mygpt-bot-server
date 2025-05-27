@@ -7,6 +7,13 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post("/send-message", async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+
+  // 🔐 Check API key
+  if (apiKey !== process.env.CUSTOM_GPT_API_KEY) {
+    return res.status(403).json({ error: "❌ Unauthorized — invalid API key" });
+  }
+
   const { prompt } = req.body;
 
   if (!prompt) {
@@ -27,12 +34,12 @@ app.post("/send-message", async (req, res) => {
     });
 
     const data = await openaiRes.json();
-    const reply = data.choices?.[0]?.message?.content || "GPT response missing.";
+    const reply = data.choices?.[0]?.message?.content || "⚠️ No reply generated.";
 
-    res.json({ reply });
+    return res.json({ reply });
   } catch (err) {
-    console.error("❌ GPT API error:", err);
-    res.status(500).json({ error: "Failed to fetch GPT response." });
+    console.error("❌ GPT API Error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
